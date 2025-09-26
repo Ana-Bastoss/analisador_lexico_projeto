@@ -1,0 +1,36 @@
+LEXEMA               | TIPO DE TOKEN     | LINHA | COLUNA
+------------------------------------------------------------------
+program              | program           | 1     | 1
+teste_dois           | ID                | 1     | 9
+;                    | SMB_SEM           | 1     | 19
+var                  | var               | 3     | 1
+valor_a              | ID                | 5     | 4
+:                    | SMB_COLON         | 5     | 12
+integer              | integer           | 5     | 14
+;                    | SMB_SEM           | 5     | 21
+total                | ID                | 7     | 4
+:                    | SMB_COLON         | 7     | 10
+real                 | real              | 7     | 12
+;                    | SMB_SEM           | 7     | 16
+begin                | begin             | 11    | 1
+valor_a              | ID                | 15    | 4
+:=                   | OP_ASS            | 15    | 12
+100                  | LIT_INT           | 15    | 15
+;                    | SMB_SEM           | 15    | 18
+total                | ID                | 17    | 4
+:=                   | OP_ASS            | 17    | 10
+(                    | SMB_OPA           | 17    | 13
+valor_a              | ID                | 17    | 14
++                    | OP_AD             | 17    | 22
+2.5                  | LIT_REAL          | 17    | 24
+)                    | SMB_CPA           | 17    | 28
+^                    | OP_POW            | 17    | 29
+2                    | LIT_INT           | 17    | 30
+(                    | SMB_OPA           | 17    | 31
+a                    | ID                | 17    | 32
+-                    | OP_MIN            | 17    | 33
+b                    | ID                | 17    | 34
+)                    | SMB_CPA           | 17    | 35
+;                    | SMB_SEM           | 17    | 36
+end                  | end               | 19    | 1
+.                    | SMB_DOT           | 19    | 4
