@@ -12,6 +12,35 @@
 
 ------------------------------------------------------------------------
 
+## 📋 Índice
+
+1. [🔹 1. Objetivo do Projeto](#-1-objetivo-do-projeto)
+2. [🔹 2. Requisitos do Projeto: Limitações do MicroPascal](#-2-requisitos-do-projeto-limitações-do-micropascal)
+   - [2.1. Palavras-chave são reservadas](#21-palavras-chave-são-reservadas)
+   - [2.2. Toda variável deve ser declarada antes do uso](#22-toda-variável-deve-ser-declarada-antes-do-uso)
+   - [2.3. Comentários não permitidos](#23-comentários-não-permitidos)
+   - [2.4. Comandos seguem semântica tradicional do Pascal](#24-comandos-seguem-semântica-tradicional-do-pascal)
+   - [2.5. Linguagem não é case-sensitive](#25-linguagem-não-é-case-sensitive)
+3. [🔹 3. Requisitos do Código estabelecidos do enunciado](#-3-requisitos-do-código-estabelecidos-do-enunciado)
+   - [3.1. Gera `.lex` com tokens + Linhas e Colunas](#31-gera-lex-com-tokens--linhas-e-colunas)
+   - [3.2. Exibe tabela de símbolos](#32-exibe-tabela-de-símbolos)
+   - [3.4. Ignorando Espaços](#34-ignorando-espaços)
+   - [3.5. Ignorando Comentários](#35-ignorando-comentários)
+   - [3.6. Reporta erros léxicos](#36-reporta-erros-léxicos)
+4. [🔹 4. O Autômato Finito Determinístico (AFD) em Detalhes](#-4-o-autômato-finito-determinístico-afd-em-detalhes)
+   - [4.1. Autômato Finito Determinístico (AFD)](#41-autômato-finito-determinístico-afd)
+   - [4.2. AFD Geral](#42-afd-geral)
+   - [4.3. AFD Específico para Expressões Binomiais](#43-afd-específico-para-expressões-binomiais)
+   - [4.4. O Alfabeto (Σ): Os Caracteres Permitidos](#44-o-alfabeto-σ-os-caracteres-permitidos)
+   - [4.5. A Lógica de Transição e o Estado de Aceitação](#45-a-lógica-de-transição-e-o-estado-de-aceitação)
+5. [🔹 5. Implementação em C](#-5-implementação-em-c)
+6. [🔹 6. Testes em MicroPascal](#-6-testes-em-micropascal)
+7. [🔹 7. Bibliotecas Utilizadas](#-7-bibliotecas-utilizadas)
+8. [🔹 8. Compilação e Execução](#-8-compilação-e-execução)
+
+------------------------------------------------------------------------
+
+
 ## 🔹 1. Objetivo do Projeto
 
 O objetivo deste projeto é construir a primeira e mais fundamental parte de um compilador, o Analisador Léxico. A sua função é ler um código-fonte escrito em "MicroPascal" e traduzir esse texto complexo em uma sequência de "blocos" simples e categorizados, chamados tokens, inicando linha, coluna, lexema, tipo do token e possíveis erros no reconhecimento do Alfabeto Léxico. Este processo é a base para que o computador possa, nas etapas seguintes, entender a gramática e o significado do código.
