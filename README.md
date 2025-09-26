@@ -1,1 +1,501 @@
-# analisador_lexico_projeto
+<h1 align="center">📑 Relatório Técnico Completo: Analisador Léxico para MicroPascal</h1>
+<p align="center">
+  <img src="header.png.png" alt="Texto alternativo" />
+</p>
+
+**Projeto:** Compilador Léxico para a linguagem MicroPascal\
+**Matéria:** Autômatos e Compiladores\
+**Professor:** Marcelo Eustáquio\
+**Curso:** 4º Semestre de Ciência da Computação\
+**Alunos:** Ana Beatriz, Brenda, Gabriel, Giovana e Arthur\
+**Data da Versão:** 25 de setembro de 2025
+
+------------------------------------------------------------------------
+
+## 🔹 1. Objetivo do Projeto
+
+O objetivo deste projeto é construir a primeira e mais fundamental parte de um compilador, o Analisador Léxico. A sua função é ler um código-fonte escrito em "MicroPascal" e traduzir esse texto complexo em uma sequência de "blocos" simples e categorizados, chamados tokens, inicando linha, coluna, lexema, tipo do token e possíveis erros no reconhecimento do Alfabeto Léxico. Este processo é a base para que o computador possa, nas etapas seguintes, entender a gramática e o significado do código.
+
+Uma característica central deste projeto é a implementação de um reconhecedor específico para expressões de expansão binomial (ex: (`(a+b)^n`), tratando-as como um único bloco lógico.
+
+> ✨ Com isso, temos o intuito de projetar um Código com capacidade de receber implementações em futuras fases, como Análise Semântica! Será um **reconhecedor para
+> expressões binomiais** como `(a+b)^n`, que no futuro será expandido
+> semanticamente usando resoluões baseadas no método teórico **Triângulo de Pascal**!
+
+------------------------------------------------------------------------
+
+## 🔹 2. Requisitos do Projeto: Limitações do MicroPascal
+
+### 2.1. Palavras-chave são reservadas
+
+``` c
+// Exemplo simplificado
+if (strcasecmp(tabela_de_simbolos[i].lexema, lexema) == 0) {
+    return TOKEN_KEY_PROGRAM;
+}
+```
+
+-   `inicializarTabelaDeSimbolos()` carrega as palavras-chave
+    (`program`, `var`, `if` etc.)\
+-   O usuário **não pode declarar variáveis** com nomes reservados
+
+> ➡️ Quando o analisador encontra uma palavra, a função consultarOuInserirSimbolo() primeiro procura na iniciaçização da tabela se a palavra já existe. Como as palavras-chave já estão lá, elas serão encontradas e o token correto (TOKEN_KEY_IF, por exemplo) será retornado. A palavra nunca será classificada como um TOKEN_ID. Isso impede que um usuário declare uma variável com o nome var ou begin.
+
+------------------------------------------------------------------------
+
+### 2.2. Toda variável deve ser declarada antes do uso
+
+- Esta é uma Regra **semântica**, não léxica.  
+- O léxico apenas marca um identificador como `TOKEN_ID`.  
+- A verificação semântica virá depois.  
+
+O trabalho do nosso Analisador Léxico é apenas identificar que uma palavra como `minhaVariavel` é um identificador (`TOKEN_ID`).  
+Ele não tem como saber se ela foi declarada ou não, pois não entende a estrutura de blocos `var` ou o conceito de "uso".  
+
+> ➡️ O que nosso código faz é preparar o caminho. Ao identificar todos os IDs e colocá-los na Tabela de Símbolos, ele fornece a ferramenta necessária para que a próxima fase do compilador (o **Analisador Semântico**) possa fazer essa verificação.
+
+------------------------------------------------------------------------
+
+### 2.3. Comentários não permitidos
+
+``` c
+if (c == '{') {
+    // ... comentário ...
+    continue; // ignora o conteúdo
+}
+```
+
+-   O compilador ignora blocos `{ ... }`
+-   Comentários não são tokens
+- O bloco de código abaixo, em `obterProximoToken`, encontra um {, consome tudo até encontrar um }, e então usa continue para pular para a próxima iteração do laço, efetivamente descartando o comentário.
+
+
+
+------------------------------------------------------------------------
+
+### 2.4 Comandos seguem semântica tradicional do Pascal
+
+-   `:=` (atribuição) é diferente de `=` (comparação)\
+-   Operadores relacionais como `<`, `<=`, `>=`, `<>` são reconhecidos
+
+
+##### Atribuição (:=) vs. Comparação (=)
+
+\
+Uma das características mais marcantes do Pascal é a distinção clara entre o operador de atribuição (:=) e o de comparação (=), implementamos o (lookahead).
+
+```c
+// Bloco que trata a comparação simples, que não tem variações
+if (c == '=') return criarToken(TOKEN_OP_EQ, "=", linha_inicio, coluna_inicio);
+
+// Bloco que diferencia a atribuição do símbolo de dois-pontos
+switch(c) {
+    case ':':
+        // Olha o próximo caractere sem avançar no arquivo
+        if (preverCaractere() == '=') {
+            proximoCaractere(); // Avança para "consumir" o '='.
+            return criarToken(TOKEN_OP_ASS, ":=", linha_inicio, coluna_inicio);
+        } else {
+            // Se não for '=', é apenas o símbolo de dois-pontos
+            return criarToken(TOKEN_SMB_COLON, ":", linha_inicio, coluna_inicio);
+        }
+}
+```
+
+###### _Semântica Pascal_
+
+ Em Pascal, `variavel := 10` armazena um valor, enquanto `if variavel = 10 then` compara valores. A sintaxe é rígida e não permite ambiguidade.
+
+O analisador construído garante essa regra na função `obterProximoToken`. Ao encontrar o caractere `:`, ele não assume o token imediatamente.
+
+A função `preverCaractere()` é usada para "espiar" o caractere seguinte. Se for um `=`, o analisador os consome juntos, formando o token de atribuição `TOKEN_OP_ASS`.
+
+Se o caractere seguinte não for um `=`, ele é tratado como um simples `TOKEN_SMB_COLON` (usado na declaração de variáveis, como `x : integer`). O operador `=` isolado é sempre tratado como `TOKEN_OP_EQ` (comparação).
+
+---
+
+#### Reconhecimento de Operadores Relacionais
+
+A linguagem Pascal utiliza operadores de múltiplos caracteres como `<>` (diferente), `<=` (menor ou igual) e `>=` (maior ou igual). O analisador precisa reconhecê-los como uma unidade, e não como símbolos separados.
+
+```c
+if (c == '<') {
+    if (preverCaractere() == '>') { proximoCaractere(); return criarToken(TOKEN_OP_NE, "<>", linha_inicio, coluna_inicio); }
+    if (preverCaractere() == '=') { proximoCaractere(); return criarToken(TOKEN_OP_LE, "<=", linha_inicio, coluna_inicio); }
+    return criarToken(TOKEN_OP_LT, "<", linha_inicio, coluna_inicio);
+}
+
+if (c == '>') {
+    if (preverCaractere() == '=') { proximoCaractere(); return criarToken(TOKEN_OP_GE, ">=", linha_inicio, coluna_inicio); }
+    return criarToken(TOKEN_OP_GT, ">", linha_inicio, coluna_inicio);
+}
+```
+
+###### _Semântica Pascal_
+
+ Expressões como `while i <= 10 do` ou `if x <> y then` são fundamentais para o controle da lógica de repetição do código.
+
+O analisador aplica a regra do "maior casamento possível" (*maximal munch*). Ao ler um `<`, ele primeiro verifica se o próximo caractere é `>` (formando `<>`) ou `=` (formando `<=`).
+
+Apenas se nenhuma dessas combinações for encontrada, ele considera o lexema como o operador simples `<`.
+
+Essa abordagem impede que uma expressão como `<>` seja erroneamente tokenizada como dois tokens separados (`TOKEN_OP_LT` e `TOKEN_OP_GT`), o que causaria um erro de sintaxe na próxima fase da compilação.
+
+---
+
+#### Distinção entre Palavras-Chave e Identificadores
+
+Palavras como `begin`, `end`, `if`, `while` têm um significado estrutural fixo(são as palavras reservadas no MicroPascal) e não podem ser usadas como nomes de variáveis. O analisador distingue essas palavras reservadas de identificadores definidos pelo usuário através de uma _Tabela de Símbolos_.
+
+```c
+// As palavras-chave são carregadas na Tabela de Símbolos
+void inicializarTabelaDeSimbolos() {
+    strcpy(tabela_de_simbolos[contador_tabela_simbolos].lexema, "program"); tabela_de_simbolos[contador_tabela_simbolos++].tipo = TOKEN_KEY_PROGRAM;
+    strcpy(tabela_de_simbolos[contador_tabela_simbolos].lexema, "begin");   tabela_de_simbolos[contador_tabela_simbolos++].tipo = TOKEN_KEY_BEGIN;
+    strcpy(tabela_de_simbolos[contador_tabela_simbolos].lexema, "end");     tabela_de_simbolos[contador_tabela_simbolos++].tipo = TOKEN_KEY_END;
+    // ...
+}
+
+// Cada palavra encontrada é verificada na tabela
+TipoToken consultarOuInserirSimbolo(const char* lexema) {
+    // Procura na tabela se o lexema já existe (como uma palavra-chave).
+    for (int i = 0; i < contador_tabela_simbolos; i++) {
+        if (strcasecmp(tabela_de_simbolos[i].lexema, lexema) == 0) {
+            return tabela_de_simbolos[i].tipo; // Se encontrou, retorna que é uma palavra-chave.
+        }
+    }
+    // Se não encontrou, é um novo identificador
+    strcpy(tabela_de_simbolos[contador_tabela_simbolos].lexema, lexema);
+    tabela_de_simbolos[contador_tabela_simbolos].tipo = TOKEN_ID;
+    contador_tabela_simbolos++;
+    return TOKEN_ID; // Retorna que é um identificador
+}
+```
+
+###### _Semântica Pascal_
+ A estrutura de um programa Pascal é definida por suas palavras-chave. `program`, `var`, `begin`, `end`, `if`, `then`, `else`, `while`, `do` são a espinha dorsal da linguagem.
+
+O processo ocorre em duas fases:
+
+- **Pré-carregamento:** A função `inicializarTabelaDeSimbolos` atua como um dicionário, pré-populando a tabela com todas as palavras reservadas e seus tokens correspondentes (ex: `"begin"` -> `TOKEN_KEY_BEGIN`).
+
+- **Verificação:** Quando o analisador lê uma sequência de letras (ex: `"soma"` ou `"begin"`), ele chama `consultarOuInserirSimbolo`. Esta função primeiro busca o lexema na tabela. Se o encontra, retorna o token de palavra-chave correspondente. Se não encontra, classifica-o como um `TOKEN_ID` (identificador) e o adiciona à tabela para referência futura.
+
+
+------------------------------------------------------------------------
+
+### 2.5. Linguagem **não é case-sensitive**
+
+A função `strcasecmp` faz uma comparação de strings ignorando a diferença entre maiúsculas e minúsculas. Isso garante que `PROGRAM, program e ProGrAm` sejam todos reconhecidos como o mesmo token `TOKEN_KEY_PROGRAM`, e que as variáveis Valor e valor sejam tratadas como o mesmo identificador.
+
+``` c
+if (strcasecmp(tabela_de_simbolos[i].lexema, lexema) == 0) {
+   // "program" == "PROGRAM" == "ProGrAm"
+}
+```
+
+------------------------------------------------------------------------
+
+## 🔹 3. Requisitos do Código estabelecidos do enunciado
+
+✔️ Gera `.lex` com tokens
+✔️ Exibe tabela de símbolos
+✔️ Mostra linha e coluna
+✔️ Reporta erros léxicos
+✔️ Ignora espaços e comentários
+
+### 3.1. Gera `.lex` com tokens + Linhas e Colunas
+
+**O bloco de código responsável por isso está dentro do laço do-while da função main(). Note como as variáveis token.linha e token.coluna são usadas na chamada `fprintf`**
+
+``` c
+// Dentro do laço do-while na função main()
+do {
+    token = obterProximoToken();
+    if (token.tipo == TOKEN_ERRO) {
+        contem_erros = true;
+    } else if (token.tipo != TOKEN_FIM_DE_ARQUIVO) {
+        
+        // Linha responsável por escrever cada linha da tabela no arquivo .lex
+        fprintf(arquivo_saida, "%-20s | %-17s | %-5d | %d\n", 
+                token.lexema, 
+                tipo_token_para_string[token.tipo], 
+                token.linha, 
+                token.coluna);
+    }
+} while (token.tipo != TOKEN_FIM_DE_ARQUIVO);
+```
+
+### 3.2. Exibe tabela de símbolos
+
+ **Primeiro ~ A função imprimirTabelaDeSimbolos(), que formata e imprime a tabela:**
+``` c
+void imprimirTabelaDeSimbolos() {
+    printf("\n--- Tabela de Símbolos Final ---\n");
+    for (int i = 0; i < contador_tabela_simbolos; i++) {
+        printf("  [%03d] Lexema: %-20s | Token: %s\n", i, tabela_de_simbolos[i].lexema, tipo_token_para_string[tabela_de_simbolos[i].tipo]);
+    }
+    printf("----------------------------------\n");
+}
+```
+**Depois ~ A chamada da função no final da main(), que garante que ela seja executada:**
+
+``` c
+// No final da função main()
+    imprimirTabelaDeSimbolos();
+    return 0;
+}
+```
+
+### 3.4. Ignorando Espaços
+
+``` c
+while (isspace(c)) {
+    continue; 
+}
+```
+
+### 3.5. Ignorando Comentários
+
+``` c
+if (c == '{') {
+    do {
+        c = proximoCaractere();
+        if (c == EOF) {
+            // erro: comentário não fechado
+        }
+    } while (c != '}');
+    continue;
+}
+```
+
+### 3.6 Reporta erros léxicos
+
+**Reconhecimento baseado na atividade proposta obtém três blocos de código dentro da função `obterProximoToken()` responsáveis por isso:**
+
+~ 1. Erro de Caractere Desconhecido: (No final do switch)
+
+``` c
+default:
+    sprintf(lexema, "%c", c);
+    fprintf(stderr, "ERRO LÉXICO: Caractere desconhecido '%c' na linha %d, coluna %d.\n", c, linha_inicio, coluna_inicio);
+    return criarToken(TOKEN_ERRO, lexema, linha_inicio, coluna_inicio);
+
+```
+~ 2. Erro de String Não-Fechada: (No bloco que trata o caractere ' )
+``` c
+if (c == '\'') {
+    return criarToken(TOKEN_LIT_STRING, lexema, linha_inicio, coluna_inicio);
+} else {
+    fprintf(stderr, "ERRO LÉXICO: String iniciada na linha %d, coluna %d, não foi fechada na mesma linha.\n", linha_inicio, coluna_inicio);
+    return criarToken(TOKEN_ERRO, lexema, linha_inicio, coluna_inicio);
+}
+```
+~ 3. Erro de Comentário Não-Fechado: (No bloco que trata o caractere { )
+
+``` c
+do {
+    c = proximoCaractere();
+    if (c == EOF) {
+        fprintf(stderr, "ERRO LÉXICO: Comentário iniciado na linha %d, coluna %d, não foi fechado antes do fim do arquivo.\n", linha_inicio_comentario, coluna_inicio_comentario);
+        return criarToken(TOKEN_ERRO, "{...", linha_inicio_comentario, coluna_inicio_comentario);
+    }
+} while (c != '}');
+```
+------------------------------------------------------------------------
+
+## 🔹 4. O Autômato Finito Determinístico (AFD) em Detalhes
+
+O "cérebro" do nosso analisador é um Autômato Finito Determinístico (AFD). Ele lê um caractere de cada vez e, dependendo do caractere que lê e da regra que está ativa no momento, ela decide qual regra ativar em seguida, mudando assim seu estado de denifinição para true(aceito) ou false(não-aceito), conforme regras estebelecidas pelo Alfabeto do Analisador Léxico!
+
+O alfabeto Σ da linguagem MicroPascal implementada é composto por:
+
+* **Letras:** `a-z`, `A-Z` (usadas em identificadores e palavras-chave)
+* **Dígitos:** `0-9` (usados em literais numéricos e identificadores)
+* **Operadores Aritméticos:** `+`, `-`, `*`, `/`
+* **Operador de Potência:** `^`
+* **Operadores Relacionais:** `<`, `>`, `=` (que formam `<`, `<=`, `>`, `>=`, `=`, `<>`)
+* **Símbolos de Atribuição:** `:` (que, combinado com `=`, forma `:=`)
+* **Símbolos de Pontuação:** `,`, `;`, `.`
+* **Delimitadores:** `(`, `)`
+* **Delimitador de String:** `'`
+* **Delimitadores de Comentário:** `{`, `}`
+* **Caractere de Espaçamento:** Espaço, tabulação, quebra de linha (que são ignorados).
+* **Caractere especial:** `_` (underscore, permitido em identificadores).
+
+### 4.1. Autômato Finito Determinístico (AFD)
+
+A lógica central do analisador é baseada em um Autômato Finito Determinístico (AFD), que define as regras de transição de estados com base no caractere lido.
+
+### 4.2. AFD Geral
+
+A função `obterProximoToken` implementa um AFD geral para a linguagem. O estado inicial é o início da função. A cada caractere lido, o autômato transita para um novo estado:
+* Se lê um espaço, volta ao estado inicial (ignora).
+* Se lê uma letra, transita para o estado de "reconhecimento de identificador/palavra-chave", onde permanece enquanto ler letras, dígitos ou `_`.
+* Se lê um dígito, transita para o estado de "reconhecimento de número", onde pode eventualmente passar para um estado de "número real" se encontrar um `.`.
+* Se lê um operador como `<`, transita para um estado que precisa "olhar à frente" (*lookahead*) para decidir se o token é `OP_LT` (`<`), `OP_LE` (`<=`) ou `OP_NE` (`<>`).
+* Se lê um caractere inválido (que não pertence ao alfabeto), transita para um **estado de erro**, que reporta o problema e a localização.
+
+### 4.3. AFD Específico para Expressões Binomiais
+
+Para o requisito especial de reconhecer `(termo1 + termo2)^expoente` como um único token, um sub-AFD foi implementado. Ele é ativado quando o caractere `(` é encontrado.
+
+**Lógica de Implementação:** A estratégia utilizada foi a de "tentativa e reversão" (*try and revert*). Ao encontrar `(`, o analisador salva sua posição no arquivo (`ftell`) e tenta validar a sequência completa da expressão binomial. Se qualquer passo falhar, ele reverte a leitura para a posição salva (`fseek`) e trata o `(` como um simples parêntese.
+
+**Estados e Transições do AFD Binomial:**
+
+* **p0 (Inicial):** O analisador está no estado inicial do AFD geral e lê o caractere `(`. Transita para **p1**.
+* **p1 (Após `(`):** Espera o primeiro caractere de um termo (letra ou dígito). Se encontrar, consome o termo e transita para **p2**. Se não, falha.
+* **p2 (Após Termo 1):** Espera um operador `+` ou `-`. Se encontrar, consome o operador e transita para **p3**. Se não, falha.
+* **p3 (Após Operador):** Espera o primeiro caractere do segundo termo. Se encontrar, consome o termo e transita para **p4**. Se não, falha.
+* **p4 (Após Termo 2):** Espera um `)`. Se encontrar, consome e transita para **p5**. Se não, falha.
+* **p5 (Após `)`):** Espera um `^`. Se encontrar, consome e transita para **p6**. Se não, falha.
+* **p6 (Após `^`):** Espera o primeiro dígito de um expoente. Se encontrar, consome o número inteiro e transita para **p7**. Se não, falha.
+* **p7 (Estado de Aceitação):** O expoente foi lido com sucesso. A sequência completa foi validada. O lexema inteiro (ex: `(2x+y)^10`) é retornado como um único token `TOKEN_EXP_BINOMIAL`.
+
+### 4.4. O Alfabeto (Σ): Os Caracteres Permitidos
+
+O alfabeto é o conjunto de todos os símbolos que o nosso AFD tem permissão para ler.
+
+* **Alfabeto Completo da Linguagem MicroPascal:** Inclui Letras, Dígitos, Underscore, Operadores (`+`, `-`, `*`, `/`, `^`, `=`, `<`, `>`), Pontuação (`:`, `;`, `,`, `.`, `(`, `)`) e Delimitadores (`'`, `{`, `}`).
+* **Alfabeto Limitado da Expressão Binomial:** Para a tarefa de reconhecer `(a+b)^n`, o sub-autômato foca em um conjunto específico: **Σ_binomial = { Letras, Dígitos, `(`, `)`, `+`, `-`, `^` }**
+
+### 4.5. A Lógica de Transição e o Estado de Aceitação
+
+O AFD da expressão binomial segue uma série de estados (`p0` a `p7`). Cada estado tem o propósito de validar uma parte da expressão (início, termo 1, operador, etc.). O **Estado de Aceitação (`p7`)** é o objetivo final. Chegar a este estado significa que o padrão foi reconhecido com sucesso, e o token `TOKEN_EXP_BINOMIAL` é gerado. Se o padrão for quebrado antes de chegar a `p7`, o autômato não aceita, e o programa trata os caracteres como tokens separados.
+
+------------------------------------------------------------------------
+
+## 🔹 5. Implementação em C
+
+### Estruturas de Dados
+
+-   `enum TipoToken` → categorias de tokens
+-   `struct Token` → ficha com `tipo`, `lexema`, `linha`, `coluna`
+-   `struct EntradaTabelaSimbolos` → dicionário de símbolos
+
+------------------------------------------------------------------------
+
+### Funções Principais
+
+-   `inicializarTabelaDeSimbolos()`
+-   `consultarOuInserirSimbolo()`
+-   `imprimirTabelaDeSimbolos()`
+-   `proximoCaractere()` \ `preverCaractere()`
+-   `criarToken()`
+-   `obterProximoToken()` (núcleo do AFD)
+-   `main()`
+
+------------------------------------------------------------------------
+
+### Tratamento de Erros Léxicos
+
+-   **Caractere inválido**
+
+``` c
+default:
+    fprintf(stderr, "ERRO LÉXICO: Caractere desconhecido '%c' na linha %d, coluna %d.\n", c, linha_inicio, coluna_inicio);
+```
+
+-   **String não-fechada**
+
+``` c
+if (c != ''') {
+    fprintf(stderr, "ERRO LÉXICO: String não fechada.\n");
+}
+```
+
+-   **Comentário não-fechado**
+
+``` c
+if (c == EOF) {
+    fprintf(stderr, "ERRO LÉXICO: Comentário não fechado.\n");
+}
+```
+
+------------------------------------------------------------------------
+
+## 🔹 6. Testes em MicroPascal
+
+### Teste 1: Todos os Tokens passaram como reconhecidos na Análise_Léxica!
+
+``` pascal
+program teste_um;
+var valor_a : integer; total : real;
+begin
+    { Este comentario sera ignorado }
+    valor_a := 100;
+    total := (valor_a + 2.5)^2;
+end.
+```
+Saída:
+------------------------------------------------------------------------
+
+### Teste 2: O que é reconhecido por padrão na Linguagem pascal!
+
+``` pascal
+program teste_dois;
+var
+    valor_a : integer;
+    total : real;
+begin
+    { Este comentario serIa ignorado }
+    valor_a := 100;
+    total := (valor_a + 2.5)^2(a-b);
+end.
+```
+Saída:
+------------------------------------------------------------------------
+
+### Teste 3: Identificando Erros e partes Corretas!
+
+``` pascal
+program teste_tres;
+var
+    a : integer;
+    b := 20; { erro de atribuição aqui, mas o léxico vê := }
+    c : char; $ erro de caractere
+begin
+    a := (b + 5)^2;
+    imprimir('teste de string... );
+end.
+```
+Saída:
+------------------------------------------------------------------------
+
+### Teste 4(Extra): Erro com Token que não faz parte do Alfabeto
+
+``` pascal
+program Sucesso_Total;
+var
+    valor_a : integer;
+    total : real;
+begin
+    { Este comentario sera ignorado }
+    valor_a := 100;
+    total := (valor_a + 2.5)#2;
+
+end.
+```
+Saída:
+------------------------------------------------------------------------
+
+## 🔹 7. Bibliotecas Utilizadas
+
+-   `<stdio.h>` → entrada e saída padrão (printf, fprintf)
+-   `<stdlib.h>` → alocação de memória e controle do programa
+-   `<string.h>` → manipulação de strings (strcmp, strcpy, strcasecmp)
+-   `<ctype.h>` → funções de classificação de caracteres (isalpha,
+    isdigit, isspace)
+-   `<stdbool.h>` → suporte ao tipo booleano (`true`, `false`)
+-   `<locale.h>` → definição de localização/região, para corrigir acentuação gramatical
+------------------------------------------------------------------------
+
+## 🔹 8. Compilação e Execução
+
+``` bash
+gcc -o analisador analisador.c
+./analisador teste1.pas
+```
+
+------------------------------------------------------------------------
