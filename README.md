@@ -1,6 +1,6 @@
 <h1 align="center">📑 Relatório Técnico Completo: Analisador Léxico para MicroPascal</h1>
 <p align="center">
-  <img src="header.png.png" alt="Texto alternativo" width="750"/>
+  <img src="header.png" alt="Texto alternativo" width="750"/>
 </p>
 
 **Projeto:** Compilador Léxico para a linguagem MicroPascal\
