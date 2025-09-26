@@ -1,13 +1,13 @@
 <h1 align="center">📑 Relatório Técnico Completo: Analisador Léxico para MicroPascal</h1>
 <p align="center">
-  <img src="header.png.png" alt="Texto alternativo" />
+  <img src="header.png.png" alt="Texto alternativo" width="750"/>
 </p>
 
 **Projeto:** Compilador Léxico para a linguagem MicroPascal\
-**Matéria:** Autômatos e Compiladores\
+**Matéria:** Linguagens Formais, Autômatos e Compiladores\
 **Professor:** Marcelo Eustáquio\
 **Curso:** 4º Semestre de Ciência da Computação\
-**Alunos:** Ana Beatriz, Brenda, Gabriel, Giovana e Arthur\
+**Alunos:** Ana Beatriz Gonçalves Bastos, Brenda Mykaelle da Mota Brito, Gabriel Bocacio Linder, Giovana Pacheco Velasco e Arthur Carvalho Feitosa Santana de Azevedo\
 **Data da Versão:** 25 de setembro de 2025
 
 ------------------------------------------------------------------------
@@ -391,13 +391,34 @@ O AFD da expressão binomial segue uma série de estados (`p0` a `p7`). Cada est
 - **Propósito:** Criar um conjunto de "rótulos" legíveis para cada categoria de token.
 - **💡 Como Funciona:** O `enum` associa nomes a valores inteiros sequenciais. Ex.: `TOKEN_KEY_PROGRAM = 0`, `TOKEN_KEY_VAR = 1`.
 
+<div align="center">
+  
 ##### `struct Token`
-| Campo | Descrição |
-|-------|-----------|
-| `tipo` | Etiqueta `TipoToken` do token |
-| `lexema` | Texto original do código-fonte |
-| `linha` | Linha inicial do lexema |
-| `coluna` | Coluna inicial do lexema |
+
+<table>
+  <tr>
+    <th>Campo</th>
+    <th>Descrição</th>
+  </tr>
+  <tr>
+    <td><code>tipo</code></td>
+    <td>Etiqueta `TipoToken` do token</td>
+  </tr>
+  <tr>
+    <td><code>lexema</code></td>
+    <td>Texto original do código-fonte</td>
+  </tr>
+  <tr>
+    <td><code>linha</code></td>
+    <td>Linha inicial do lexema</td>
+  </tr>
+  <tr>
+    <td><code>coluna</code></td>
+    <td>Coluna inicial do lexema</td>
+  </tr>
+</table>
+
+</div>
 
 - **Propósito:** Servir como uma ficha de identidade para cada token.
 
@@ -405,7 +426,6 @@ O AFD da expressão binomial segue uma série de estados (`p0` a `p7`). Cada est
 - **Propósito:** Representar uma entrada da Tabela de Símbolos.
 - **💡 Como Funciona:** Armazena o `lexema` e sua etiqueta (`tipo`), garantindo organização.
 
----
 
 #### Detalhamento das Funções
 
