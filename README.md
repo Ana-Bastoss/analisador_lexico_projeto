@@ -14,29 +14,41 @@
 
 ## 📋 Índice
 
-1. [🔹 1. Objetivo do Projeto](#-1-objetivo-do-projeto)
-2. [🔹 2. Requisitos do Projeto: Limitações do MicroPascal](#-2-requisitos-do-projeto-limitações-do-micropascal)
-   - [2.1. Palavras-chave são reservadas](#21-palavras-chave-são-reservadas)
-   - [2.2. Toda variável deve ser declarada antes do uso](#22-toda-variável-deve-ser-declarada-antes-do-uso)
-   - [2.3. Comentários não permitidos](#23-comentários-não-permitidos)
-   - [2.4. Comandos seguem semântica tradicional do Pascal](#24-comandos-seguem-semântica-tradicional-do-pascal)
-   - [2.5. Linguagem não é case-sensitive](#25-linguagem-não-é-case-sensitive)
-3. [🔹 3. Requisitos do Código estabelecidos do enunciado](#-3-requisitos-do-código-estabelecidos-do-enunciado)
-   - [3.1. Gera `.lex` com tokens + Linhas e Colunas](#31-gera-lex-com-tokens--linhas-e-colunas)
-   - [3.2. Exibe tabela de símbolos](#32-exibe-tabela-de-símbolos)
-   - [3.4. Ignorando Espaços](#34-ignorando-espaços)
-   - [3.5. Ignorando Comentários](#35-ignorando-comentários)
-   - [3.6. Reporta erros léxicos](#36-reporta-erros-léxicos)
-4. [🔹 4. O Autômato Finito Determinístico (AFD) em Detalhes](#-4-o-autômato-finito-determinístico-afd-em-detalhes)
-   - [4.1. Autômato Finito Determinístico (AFD)](#41-autômato-finito-determinístico-afd)
-   - [4.2. AFD Geral](#42-afd-geral)
-   - [4.3. AFD Específico para Expressões Binomiais](#43-afd-específico-para-expressões-binomiais)
-   - [4.4. O Alfabeto (Σ): Os Caracteres Permitidos](#44-o-alfabeto-σ-os-caracteres-permitidos)
-   - [4.5. A Lógica de Transição e o Estado de Aceitação](#45-a-lógica-de-transição-e-o-estado-de-aceitação)
-5. [🔹 5. Implementação em C](#-5-implementação-em-c)
-6. [🔹 6. Testes em MicroPascal](#-6-testes-em-micropascal)
-7. [🔹 7. Bibliotecas Utilizadas](#-7-bibliotecas-utilizadas)
-8. [🔹 8. Compilação e Execução](#-8-compilação-e-execução)
+1.  [**Objetivo do Projeto**](#-1-objetivo-do-projeto)
+2.  [**Requisitos do Projeto: Limitações do MicroPascal**](#-2-requisitos-do-projeto-limitações-do-micropascal)
+    * [2.1. Palavras-chave são reservadas](#21-palavras-chave-são-reservadas)
+    * [2.2. Toda variável deve ser declarada antes do uso](#22-toda-variável-deve-ser-declarada-antes-do-uso)
+    * [2.3. Comentários não permitidos](#23-comentários-não-permitidos)
+    * [2.4. Comandos seguem semântica tradicional do Pascal](#24-comandos-seguem-semântica-tradicional-do-pascal)
+    * [2.5. Linguagem não é case-sensitive](#25-linguagem-não-é-case-sensitive)
+3.  [**Requisitos do Código estabelecidos do enunciado**](#-3-requisitos-do-código-estabelecidos-do-enunciado)
+    * [3.1. Gera `.lex` com tokens + Linhas e Colunas](#31-gera-lex-com-tokens--linhas-e-colunas)
+    * [3.2. Exibe tabela de símbolos](#32-exibe-tabela-de-símbolos)
+    * [3.3. Ignorando Espaços](#33-ignorando-espaços)
+    * [3.4. Ignorando Comentários](#34-ignorando-comentários)
+    * [3.5. Reporta erros léxicos](#35-reporta-erros-léxicos)
+4.  [**O Autômato Finito Determinístico (AFD) em Detalhes**](#-4-o-autômato-finito-determinístico-afd-em-detalhes)
+    * [4.1. Autômato Finito Determinístico (AFD)](#41-autômato-finito-determinístico-afd)
+    * [4.2. AFD Geral](#42-afd-geral)
+    * [4.3. AFD Específico para Expressões Binomiais](#43-afd-específico-para-expressões-binomiais)
+    * [4.4. O Alfabeto (Σ): Os Caracteres Permitidos](#44-o-alfabeto-σ-os-caracteres-permitidos)
+    * [4.5. A Lógica de Transição e o Estado de Aceitação](#45-a-lógica-de-transição-e-o-estado-de-aceitação)
+5.  [**Implementação em C**](#-5-implementação-em-c)
+    * [Estruturas de Dados: `enum` e `structs`](#estruturas-de-dados-enum-e-structs)
+    * [Detalhamento das Funções](#detalhamento-das-funções)
+    * [Tratamento de Erros Léxicos](#tratamento-de-erros-léxicos)
+6.  [**Testes em MicroPascal**](#-6-testes-em-micropascal)
+    * [Teste 1: Todos os Tokens passaram como reconhecidos na Análise_Léxica!](#teste-1-todos-os-tokens-passaram-como-reconhecidos-na-análise_léxica)
+    * [Teste 2: O que é reconhecido por padrão na Linguagem pascal!](#teste-2-o-que-é-reconhecido-por-padrão-na-linguagem-pascal)
+    * [Teste 3: Identificando Erros e partes Corretas!](#teste-3-identificando-erros-e-partes-corretas)
+    * [Teste 4(Extra): Erro com Token que não faz parte do Alfabeto](#teste-4extra-erro-com-token-que-não-faz-parte-do-alfabeto)
+7.  [**Bibliotecas Utilizadas**](#-7-bibliotecas-utilizadas)
+8.  [**Expressões Binominais e Reconhecimento Semântico Futuro**](#-8-expressões-binominais-e-reconhecimento-semântico-futuro)
+    * [8.1. Fundamentos Matemáticos](#81-fundamentos-matemáticos)
+    * [8.2. Etapa 1: A Análise Léxica (O Reconhecimento do Padrão)](#82-etapa-1-a-análise-léxica-o-reconhecimento-do-padrão)
+    * [8.3. Etapa 2: A Análise Semântica (Objetivo Futuro do Projeto)](#83-etapa-2-a-análise-semântica-objetivo-futuro-do-projeto)
+9.  [**Compilação e Execução**](#-9-compilação-e-execução)
+* [**Anexo: Código-Fonte Completo**](#-anexo-código-fonte-completo-mainc)
 
 ------------------------------------------------------------------------
 
@@ -276,7 +288,7 @@ void imprimirTabelaDeSimbolos() {
 }
 ```
 
-### 3.4. Ignorando Espaços
+### 3.3. Ignorando Espaços
 
 ``` c
 while (isspace(c)) {
@@ -284,7 +296,7 @@ while (isspace(c)) {
 }
 ```
 
-### 3.5. Ignorando Comentários
+### 3.4. Ignorando Comentários
 
 ``` c
 if (c == '{') {
@@ -298,7 +310,7 @@ if (c == '{') {
 }
 ```
 
-### 3.6 Reporta erros léxicos
+### 3.5 Reporta erros léxicos
 
 **Reconhecimento baseado na atividade proposta obtém três blocos de código dentro da função `obterProximoToken()` responsáveis por isso:**
 
@@ -381,6 +393,8 @@ Para o requisito especial de reconhecer `(termo1 + termo2)^expoente` como um ún
 * **p5 (Após `)`):** Espera um `^`. Se encontrar, consome e transita para **p6**. Se não, falha.
 * **p6 (Após `^`):** Espera o primeiro dígito de um expoente. Se encontrar, consome o número inteiro e transita para **p7**. Se não, falha.
 * **p7 (Estado de Aceitação):** O expoente foi lido com sucesso. A sequência completa foi validada. O lexema inteiro (ex: `(2x+y)^10`) é retornado como um único token `TOKEN_EXP_BINOMIAL`.
+
+![JFLAP](AFD_JFLAP.jpg "AFD")
 
 ### 4.4. O Alfabeto (Σ): Os Caracteres Permitidos
 
@@ -522,8 +536,8 @@ Então, a lógica de falha e reversão ocorre. O analisador volta atrás e passa
 
 **Saída:**
 
-![(teste1_saida_cmd "Teste1_pas")
-![(teste1_saida_lex "Teste1_pas")
+![CMD_SAIDA](teste1_saida_cmd.png "Teste1_pas")
+![LEX_SAIDA](teste1_saida_lex.png "Teste1_pas")
 ------------------------------------------------------------------------
 
 ### Teste 2: O que é reconhecido por padrão na Linguagem pascal!
@@ -539,11 +553,11 @@ begin
     total := (valor_a + 2.5)^2(a-b);
 end.
 ```
-
+Aqui, não há erros léxicos, e sim erros Sintáticos, que serão complentados no futuro! A sequência `^2(a-b)` é sintaticamente incorreta em expressões binominais.
 
 **Saída:**
-![(teste2_saida_cmd "Teste1_pas")
-![(teste2_saida_lex "Teste1_pas")
+![CMD_SAIDA](teste2_saida_cmd.png "Teste2_pas")
+![CMD_SAIDA](teste2_saida_lex.png "Teste2_pas")
 ------------------------------------------------------------------------
 
 ### Teste 3: Identificando Erros e partes Corretas!
@@ -563,8 +577,8 @@ O código indica quais caracteres apresentam-se como erro léxico e os demais n�
 
 Saída:
 
-![(teste3_saida_cmd "Teste3_pas")
-![(teste3_saida_lex "Teste3_pas")
+![CMD_SAIDA](teste3_saida_cmd.png "Teste3_pas")
+![CMD_SAIDA](teste3_saida_lex.png "Teste3_pas")
 ------------------------------------------------------------------------
 
 ### Teste 4(Extra): Erro com Token que não faz parte do Alfabeto
@@ -581,7 +595,14 @@ begin
 
 end.
 ```
+
+Aqui, há erro Léxico, # não faz parte do nosso alfabeto AFD!
+
 Saída:
+
+![CMD_SAIDA](teste4_saida_cmd.png "Teste4_pas")
+![CMD_SAIDA](teste4_saida_lex.png "Teste4_pas")
+
 ------------------------------------------------------------------------
 
 ## 🔹 7. Bibliotecas Utilizadas
@@ -594,12 +615,58 @@ Saída:
 -   `<stdbool.h>` → suporte ao tipo booleano (`true`, `false`)
 -   `<locale.h>` → definição de localização/região, para corrigir acentuação gramatical
 ------------------------------------------------------------------------
+## 🔹 8 Expressões Binominais e Reconhecimento Semântico Futuro
 
-## 🔹 8. Compilação e Execução
+A funcionalidade mais distinta deste compilador é sua capacidade de interpretar e processar expansões binomiais. Este recurso demonstra a colaboração entre as duas fases primárias da compilação: a **Análise Léxica**, que reconhece a forma, e a **Análise Semântica**, que interpreta o significado e executa a lógica.
+
+### 8.1. Fundamentos Matemáticos
+
+[cite_start]As expressões binominais surgem da expansão de potências de binômios, que são expressões do tipo $(a+b)^n$[cite: 1]. [cite_start]Nesse formato, `a` e `b` podem ser números reais ou variáveis, e `n` é um número inteiro[cite: 1]. [cite_start]O estudo dessas expansões está diretamente ligado ao **Teorema Binomial de Newton**, uma fórmula que permite expandir sistematicamente qualquer potência de um binômio[cite: 1].
+
+A forma geral do Teorema de Newton é dada por:
+[cite_start]$$(a+b)^n = \sum_{k=0}^{n} \binom{n}{k} a^{n-k} b^k \text{[cite: 1]}$$
+
+Onde os componentes da fórmula significam:
+* [cite_start]**$\binom{n}{k}$**: É o **coeficiente binomial**, que determina o valor numérico que multiplica cada termo da expansão[cite: 1]. [cite_start]Ele é calculado pela fórmula $ \frac{n!}{k!(n-k)!} $[cite: 1].
+* [cite_start]**$a^{n-k}$ e $b^k$**: Representam as potências dos termos `a` e `b`[cite: 1]. [cite_start]Note que, à medida que `k` aumenta, o expoente de `a` decresce, enquanto o de `b` cresce[cite: 1].
+* [cite_start]**$\sum_{k=0}^{n}$**: Indica que devemos somar todos os termos gerados, variando o valor de `k` desde 0 até `n`[cite: 1].
+
+[cite_start]Essa expansão é fundamental em diversas áreas da matemática e da computação, incluindo álgebra, combinatória, estatística e até em algoritmos de inteligência artificial[cite: 1].
+
+### 8.2. Etapa 1: A Análise Léxica (O Reconhecimento do Padrão)
+
+A fase léxica, já implementada neste projeto, atua como um **reconhecedor de padrões sintáticos**. Ela não compreende a matemática do Teorema Binomial; sua única responsabilidade é identificar se uma sequência de caracteres no código-fonte corresponde à *estrutura* de uma expressão binomial válida para o nosso escopo.
+
+O Autômato Finito Determinístico (AFD) especializado que construímos valida a forma `(termo1 op termo2)^expoente`. Se a estrutura é validada, o analisador "empacota" a string inteira em um único token, `TOKEN_EXP_BINOMIAL`, passando a responsabilidade para a próxima fase.
+
+### 8.3. Etapa 2: A Análise Semântica (Objetivo Futuro do Projeto)
+
+Esta é a fase onde a "inteligência" do compilador interpretará o significado do token e aplicará a matemática. O objetivo é pegar o lexema e gerar sua forma expandida.
+
+O fluxo de trabalho do Analisador Semântico será:
+
+1.  **Extração dos Componentes:** Ao receber o token com o lexema `(2x+y)^2`, a primeira tarefa é extrair os valores concretos para os componentes da fórmula: `a = 2x`, `b = y`, e `n = 2`[cite: 1].
+
+2.  **Cálculo dos Coeficientes:** Com o valor de `n` extraído, o analisador calculará os coeficientes binomiais $\binom{n}{k}$ para cada `k` de 0 a `n`[cite: 1]. Isso pode ser feito tanto pela fórmula fatorial quanto pela geração da linha `n` do Triângulo de Pascal, que é computacionalmente mais eficiente para valores de `n` não muito grandes.
+
+3.  **Construção da Expansão:** O analisador irá iterar de `k=0` até `n=2`, construindo cada termo da expansão:
+    * **k=0:** $\binom{2}{0} (2x)^{2-0} (y)^0 = 1 \cdot (4x^2) \cdot 1 = 4x^2$
+    * **k=1:** $\binom{2}{1} (2x)^{2-1} (y)^1 = 2 \cdot (2x) \cdot y = 4xy$
+    * **k=2:** $\binom{2}{2} (2x)^{2-2} (y)^2 = 1 \cdot 1 \cdot y^2 = y^2$
+
+4.  **Geração da Saída:** O resultado final seria a representação do polinômio expandido: `4*x^2 + 4*x*y + y^2`.
+
+#### Escopo do Projeto
+É importante notar que o escopo deste compilador se limita a casos onde o expoente `n` é um **inteiro não negativo**. [cite_start]A fonte menciona que, para expoentes negativos ou fracionários, a expansão se torna uma série binomial infinita, válida apenas sob certas condições. O tratamento dessas séries generalizadas está fora do escopo do presente trabalho.
+
+## 🔹 9. Compilação e Execução
 
 ``` bash
 gcc -o analisador analisador.c
 ./analisador teste1.pas
 ```
+## 📄 Anexo: Código-Fonte Completo (main.c)
+
+ [`analisador_lexico.c`](./analisador_lexico.c)
 
 ------------------------------------------------------------------------
