@@ -511,7 +511,19 @@ begin
     total := (valor_a + 2.5)^2;
 end.
 ```
-Saída:
+
+A regra de expansão binominal é que a e b devem fazer parte do conjunto de reais, ou seja, números negativos e decimais são possívels, no entanto, em nossa primeira análise léxica, o número 2.5 é decimal.
+
+O AFD(junto do alfabeto definido começa a ler "2.5". Ele lê o 2, que é um dígito e está OK. Mas em seguida ele encontra o caractere . (ponto).
+
+O ponto não é uma letra nem um dígito, então ele quebra a regra do nosso AFD especial. No momento em que o AFD encontrou o ponto, ele concluiu: "Este padrão não corresponde à expressão binomial que eu procuro."
+
+Então, a lógica de falha e reversão ocorre. O analisador volta atrás e passa a tratar (valor_a + 2.5)^2 como uma sequência de tokens comuns, resultando na saída a seguir no arquivo.lex!
+
+**Saída:**
+
+![(teste1_saida_cmd "Teste1_pas")
+![(teste1_saida_lex "Teste1_pas")
 ------------------------------------------------------------------------
 
 ### Teste 2: O que é reconhecido por padrão na Linguagem pascal!
@@ -527,7 +539,11 @@ begin
     total := (valor_a + 2.5)^2(a-b);
 end.
 ```
-Saída:
+
+
+**Saída:**
+![(teste2_saida_cmd "Teste1_pas")
+![(teste2_saida_lex "Teste1_pas")
 ------------------------------------------------------------------------
 
 ### Teste 3: Identificando Erros e partes Corretas!
@@ -543,7 +559,12 @@ begin
     imprimir('teste de string... );
 end.
 ```
+O código indica quais caracteres apresentam-se como erro léxico e os demais não apontados são corretos!
+
 Saída:
+
+![(teste3_saida_cmd "Teste3_pas")
+![(teste3_saida_lex "Teste3_pas")
 ------------------------------------------------------------------------
 
 ### Teste 4(Extra): Erro com Token que não faz parte do Alfabeto
