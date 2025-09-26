@@ -198,11 +198,11 @@ if (strcasecmp(tabela_de_simbolos[i].lexema, lexema) == 0) {
 
 ## 🔹 3. Requisitos do Código estabelecidos do enunciado
 
-✔️ Gera `.lex` com tokens
-✔️ Exibe tabela de símbolos
-✔️ Mostra linha e coluna
-✔️ Reporta erros léxicos
-✔️ Ignora espaços e comentários
+Gera `.lex` com tokens ✔️ 
+Exibe tabela de símbolos ✔️ 
+Mostra linha e coluna ✔️ 
+Reporta erros léxicos ✔️ 
+Ignora espaços e comentários ✔️ 
 
 ### 3.1. Gera `.lex` com tokens + Linhas e Colunas
 
@@ -364,54 +364,88 @@ O alfabeto é o conjunto de todos os símbolos que o nosso AFD tem permissão pa
 
 O AFD da expressão binomial segue uma série de estados (`p0` a `p7`). Cada estado tem o propósito de validar uma parte da expressão (início, termo 1, operador, etc.). O **Estado de Aceitação (`p7`)** é o objetivo final. Chegar a este estado significa que o padrão foi reconhecido com sucesso, e o token `TOKEN_EXP_BINOMIAL` é gerado. Se o padrão for quebrado antes de chegar a `p7`, o autômato não aceita, e o programa trata os caracteres como tokens separados.
 
+| Estado Atual | Entrada                | Próximo Estado                      | Observação                                                |
+| ------------ | ---------------------- | ----------------------------------- | --------------------------------------------------------- |
+| **q0**       | `(`                    | **q1**                              | Ativação do sub-AFD ao detectar `(`                       |
+| **q1**       | letra ou dígito        | **q2**                              | Início do Termo 1                                         |
+| **q2**       | letra ou dígito        | **q2**                              | **LOOP 1**: consome todo o Termo 1                        |
+| **q2**       | `+` ou `-`             | **q3**                              | Final do Termo 1, operador aritmético                     |
+| **q3**       | letra ou dígito        | **q4**                              | Início do Termo 2                                         |
+| **q4**       | letra ou dígito ou `.` | **q4**                              | **LOOP 2**: consome todo o Termo 2 (inclui números reais) |
+| **q4**       | `)`                    | **q5**                              | Fechamento da expressão binomial                          |
+| **q5**       | `^`                    | **q6**                              | Detecta operador de potência                              |
+| **q6**       | dígito                 | **q7**                              | Início do expoente                                        |
+| **q7**       | dígito                 | **q7**                              | **LOOP 3**: consome todos os dígitos do expoente          |
+| **q7**       | qualquer outro símbolo | Aceita o token `TOKEN_EXP_BINOMIAL` | Estado final de aceitação                                 |
+
+
 ------------------------------------------------------------------------
 
 ## 🔹 5. Implementação em C
 
-### Estruturas de Dados
+### Detalhamento Completo do Código-Fonte
 
--   `enum TipoToken` → categorias de tokens
--   `struct Token` → ficha com `tipo`, `lexema`, `linha`, `coluna`
--   `struct EntradaTabelaSimbolos` → dicionário de símbolos
+#### Estruturas de Dados: `enum` e `structs`
 
-------------------------------------------------------------------------
+##### `enum TipoToken`
+- **Propósito:** Criar um conjunto de "rótulos" legíveis para cada categoria de token.
+- **💡 Como Funciona:** O `enum` associa nomes a valores inteiros sequenciais. Ex.: `TOKEN_KEY_PROGRAM = 0`, `TOKEN_KEY_VAR = 1`.
 
-### Funções Principais
+##### `struct Token`
+| Campo | Descrição |
+|-------|-----------|
+| `tipo` | Etiqueta `TipoToken` do token |
+| `lexema` | Texto original do código-fonte |
+| `linha` | Linha inicial do lexema |
+| `coluna` | Coluna inicial do lexema |
 
--   `inicializarTabelaDeSimbolos()`
--   `consultarOuInserirSimbolo()`
--   `imprimirTabelaDeSimbolos()`
--   `proximoCaractere()` \ `preverCaractere()`
--   `criarToken()`
--   `obterProximoToken()` (núcleo do AFD)
--   `main()`
+- **Propósito:** Servir como uma ficha de identidade para cada token.
 
-------------------------------------------------------------------------
+##### `struct EntradaTabelaSimbolos`
+- **Propósito:** Representar uma entrada da Tabela de Símbolos.
+- **💡 Como Funciona:** Armazena o `lexema` e sua etiqueta (`tipo`), garantindo organização.
 
-### Tratamento de Erros Léxicos
+---
 
--   **Caractere inválido**
+#### Detalhamento das Funções
 
-``` c
+| Função | Propósito | Como Funciona | Quem Utiliza |
+|--------|-----------|---------------|--------------|
+| `inicializarTabelaDeSimbolos()` | Pré-carregar palavras-chave | Copia palavras como `"program"`, `"var"` e associa etiquetas | `main` |
+| `consultarOuInserirSimbolo(const char* lexema)` | Gerenciar a Tabela de Símbolos | Procura ou adiciona novos identificadores e retorna a etiqueta | `obterProximoToken` |
+| `imprimirTabelaDeSimbolos()` | Mostrar todas entradas da tabela | Percorre o array e imprime no terminal | `main` |
+| `proximoCaractere()` | Avançar no arquivo | Lê e consome o próximo caractere, atualizando linha/coluna | `obterProximoToken` |
+| `preverCaractere()` | Espiar próximo caractere | Lê o próximo caractere sem consumi-lo (`ungetc`) | `obterProximoToken` |
+| `criarToken(...)` | Criar token pronto | Recebe tipo, lexema, linha, coluna e retorna a `struct Token` | `obterProximoToken` |
+| `obterProximoToken()` | Reconhecer próximo token | Loop principal que descarta espaços/comentários, identifica e cria token | `main` |
+| `main(...)` | Coordenar análise | Configura ambiente, abre arquivos, chama funções e gera relatórios | Sistema operacional |
+
+---
+
+#### Tratamento de Erros Léxicos
+
+-  **Caractere inválido**
+```c
 default:
-    fprintf(stderr, "ERRO LÉXICO: Caractere desconhecido '%c' na linha %d, coluna %d.\n", c, linha_inicio, coluna_inicio);
+    fprintf(stderr, "ERRO LÉXICO: Caractere desconhecido '%c' na linha %d, coluna %d.\n",
+            c, linha_inicio, coluna_inicio);
 ```
 
--   **String não-fechada**
-
-``` c
-if (c != ''') {
+-  **String não fechada**
+```c
+if (c != '\'') {
     fprintf(stderr, "ERRO LÉXICO: String não fechada.\n");
 }
 ```
 
--   **Comentário não-fechado**
-
-``` c
+-  **Comentário não fechado**
+```c
 if (c == EOF) {
     fprintf(stderr, "ERRO LÉXICO: Comentário não fechado.\n");
 }
 ```
+
+
 
 ------------------------------------------------------------------------
 
